@@ -31,9 +31,9 @@ Dependabot, `npm audit`, `pip-audit` and `osv-scanner` stop being useful once th
 ## Install
 
 ```bash
-pipx install git+https://github.com/garag0l/mcp-sdk-audit
+pipx install mcp-sdk-audit
 # or
-pip install git+https://github.com/garag0l/mcp-sdk-audit
+pip install mcp-sdk-audit
 ```
 
 Python 3.11+ and no third-party dependencies.
@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: garag0l/mcp-sdk-audit@v0.1.1
+      - uses: garag0l/mcp-sdk-audit@v0.1.2
         with:
           fail-on: high        # critical | high | medium | low | none
           # upload-sarif: "true"

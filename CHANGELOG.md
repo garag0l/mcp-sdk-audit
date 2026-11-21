@@ -4,6 +4,14 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-21
+
+### Added
+- Published to PyPI: `pipx install mcp-sdk-audit`.
+
+### Fixed
+- Release notes now contain only the tagged version's CHANGELOG section.
+
 ## [0.1.1] - 2026-11-21
 
 ### Fixed
