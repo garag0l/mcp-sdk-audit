@@ -4,6 +4,11 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-21
+
+### Fixed
+- `action.yml` failed to load because of an unquoted colon in an input description. Use `@v0.1.1` or later for the GitHub Action.
+
 ## [0.1.0] - 2026-11-21
 
 ### Added
