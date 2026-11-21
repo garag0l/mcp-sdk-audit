@@ -13,7 +13,7 @@ inputs:
     description: Fail the step at or above this severity (critical, high, medium, low, none).
     default: medium
   upload-sarif:
-    description: Upload results to GitHub code scanning (needs `security-events: write`).
+    description: "Upload results to GitHub code scanning (needs security-events: write)."
     default: "true"
   online:
     description: Fetch the latest advisories from the GitHub Advisory Database instead of the bundled snapshot.
