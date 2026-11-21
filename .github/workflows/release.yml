@@ -40,7 +40,7 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          awk -v v="${TAG#v}" '$0 ~ "^## \[?"v"\]?" {f=1; next} /^## / && f {exit} f' CHANGELOG.md > notes.md
+          awk -v h="## [${TAG#v}]" 'index($0, h) == 1 {f=1; next} /^## / && f {exit} f' CHANGELOG.md > notes.md
           cat notes.md
       - uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
