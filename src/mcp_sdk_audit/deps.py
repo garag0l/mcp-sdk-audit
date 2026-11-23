@@ -12,11 +12,14 @@ from .advisories import TRACKED
 
 NPM_PKGS = set(TRACKED["npm"])
 GO_MOD = TRACKED["go"][0]
+RUST_CRATES = set(TRACKED["rust"])
+RUBY_GEMS = set(TRACKED["rubygems"])
+COMPOSER_PKGS = set(TRACKED["composer"])
 
 
 @dataclass(frozen=True)
 class Dep:
-    ecosystem: str  # npm | pip | go
+    ecosystem: str  # npm | pip | go | rust | rubygems | composer
     package: str
     version: str
     file: str
@@ -131,6 +134,44 @@ def parse_go_mod(path: Path, rel: str) -> list[Dep]:
     return [Dep("go", GO_MOD, m.group(1).lstrip("v"), rel, text.count("\n", 0, m.start()) + 1) for m in _GOMOD.finditer(text)]
 
 
+def parse_cargo_lock(path: Path, rel: str) -> list[Dep]:
+    """Cargo.lock: [[package]] name/version tables (rmcp, the official Rust SDK)."""
+    text = path.read_text(encoding="utf-8")
+    data = tomllib.loads(text)
+    out = []
+    for pkg in data.get("package", []):
+        name = str(pkg.get("name", ""))
+        if name in RUST_CRATES and pkg.get("version"):
+            out.append(Dep("rust", name, pkg["version"], rel, _line_of(text, f'name = "{name}"\nversion = "{pkg["version"]}"')))
+    return out
+
+
+# Gemfile.lock specs are indented four spaces: "    mcp (0.4.0)". Platform suffixes ("-x86_64-linux") are dropped.
+_GEM = re.compile(r"^ {4}([A-Za-z0-9_.\-]+) \(([0-9][^)\s-]*)[^)]*\)\s*$", re.M)
+
+
+def parse_gemfile_lock(path: Path, rel: str) -> list[Dep]:
+    text = path.read_text(encoding="utf-8")
+    return [
+        Dep("rubygems", m.group(1), m.group(2), rel, text.count("\n", 0, m.start()) + 1)
+        for m in _GEM.finditer(text)
+        if m.group(1) in RUBY_GEMS
+    ]
+
+
+def parse_composer_lock(path: Path, rel: str) -> list[Dep]:
+    text = path.read_text(encoding="utf-8")
+    data = json.loads(text)
+    out = []
+    for section in ("packages", "packages-dev"):
+        for pkg in data.get(section) or []:
+            name, ver = pkg.get("name"), str(pkg.get("version", "")).removeprefix("v")
+            # Skip branch installs such as "dev-main": there is no release version to match.
+            if name in COMPOSER_PKGS and ver[:1].isdigit():
+                out.append(Dep("composer", name, ver, rel, _line_of(text, f'"name": "{name}"')))
+    return out
+
+
 PARSERS = {
     "package-lock.json": parse_package_lock,
     "npm-shrinkwrap.json": parse_package_lock,
@@ -142,6 +183,10 @@ PARSERS = {
     "pdm.lock": parse_toml_lock,
     "Pipfile.lock": parse_pipfile_lock,
     "go.mod": parse_go_mod,
+    "Cargo.lock": parse_cargo_lock,
+    "Gemfile.lock": parse_gemfile_lock,
+    "gems.locked": parse_gemfile_lock,
+    "composer.lock": parse_composer_lock,
 }
 
 

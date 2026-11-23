@@ -20,9 +20,13 @@ TRACKED = {
         "@modelcontextprotocol/express",
         "@modelcontextprotocol/hono",
         "@modelcontextprotocol/fastify",
+        "@modelcontextprotocol/inspector",
     ],
     "pip": ["mcp"],
     "go": ["github.com/modelcontextprotocol/go-sdk"],
+    "rust": ["rmcp"],
+    "rubygems": ["mcp"],
+    "composer": ["mcp/sdk"],
 }
 
 API = "https://api.github.com/advisories"

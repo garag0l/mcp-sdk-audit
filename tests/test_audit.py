@@ -61,7 +61,7 @@ def test_snapshot_shape():
         assert r["ghsa"].startswith("GHSA-")
         assert r["affected"]
         for a in r["affected"]:
-            assert a["ecosystem"] in {"npm", "pip", "go"}
+            assert a["ecosystem"] in {"npm", "pip", "go", "rust", "rubygems", "composer"}
             in_range("1.0.0", a["vulnerable_range"])  # every range must parse
 
 
@@ -267,3 +267,65 @@ def test_more_lockfiles(tmp_path):
         ("mcp", "1.22.0"),
         ("github.com/modelcontextprotocol/go-sdk", "1.4.1"),
     }
+
+
+def test_rust_ruby_php_inspector_lockfiles(tmp_path):
+    (tmp_path / "rs").mkdir()
+    (tmp_path / "rs" / "Cargo.lock").write_text(
+        'version = 4\n\n[[package]]\nname = "rmcp"\nversion = "0.8.5"\nsource = "registry+x"\n\n'
+        '[[package]]\nname = "rmcp-macros"\nversion = "0.8.5"\n\n[[package]]\nname = "rmcpx"\nversion = "9.9.9"\n'
+    )
+    (tmp_path / "rb").mkdir()
+    (tmp_path / "rb" / "Gemfile.lock").write_text(
+        "GEM\n  remote: https://rubygems.org/\n  specs:\n    json-schema (5.1.0)\n    mcp (0.4.0)\n      json-schema (>= 4.1)\n"
+        "    mcp-client (1.0.0)\n\nDEPENDENCIES\n  mcp (~> 0.4)\n"
+    )
+    (tmp_path / "php").mkdir()
+    (tmp_path / "php" / "composer.lock").write_text(
+        json.dumps(
+            {
+                "packages": [{"name": "mcp/sdk", "version": "v0.6.0"}, {"name": "acme/mcp", "version": "1.0.0"}],
+                "packages-dev": [{"name": "mcp/sdk", "version": "dev-main"}],
+            }
+        )
+    )
+    (tmp_path / "js").mkdir()
+    (tmp_path / "js" / "package-lock.json").write_text(
+        json.dumps({"lockfileVersion": 3, "packages": {"node_modules/@modelcontextprotocol/inspector": {"version": "0.16.2"}}})
+    )
+    deps = scan(tmp_path, RECORDS, source=False).deps
+    assert {(d.ecosystem, d.package, d.version) for d in deps} == {
+        ("rust", "rmcp", "0.8.5"),
+        ("rubygems", "mcp", "0.4.0"),
+        ("composer", "mcp/sdk", "0.6.0"),
+        ("npm", "@modelcontextprotocol/inspector", "0.16.2"),
+    }
+    rust = next(d for d in deps if d.ecosystem == "rust")
+    assert (rust.file, rust.line) == ("rs/Cargo.lock", 4)
+
+
+def test_new_ecosystems_match_advisories(tmp_path):
+    # Ranges copied from the published advisories, so matching works before the snapshot refresh lands.
+    def rec(ghsa, eco, pkg, rng):
+        return {
+            "ghsa": ghsa,
+            "cve": None,
+            "severity": "high",
+            "summary": "",
+            "url": "",
+            "published": "2026-11-01",
+            "affected": [{"ecosystem": eco, "package": pkg, "vulnerable_range": rng, "patched": None}],
+        }
+
+    records = [
+        rec("GHSA-c9f9-cp8h-jcj5", "rust", "rmcp", ">= 0.2.0, < 3.9.0"),
+        rec("GHSA-rjr6-rcgv-9m7m", "rubygems", "mcp", "< 0.23.0"),
+        rec("GHSA-7m52-jw36-44r3", "composer", "mcp/sdk", ">= 0.5.0, < 0.7.1"),
+        rec("GHSA-g9hg-qhmf-q45m", "npm", "@modelcontextprotocol/inspector", "< 0.16.6"),
+        rec("GHSA-xxxx-wrong-eco", "pip", "mcp", "< 99.0.0"),  # gem "mcp" must not match the PyPI package
+    ]
+    (tmp_path / "Cargo.lock").write_text('[[package]]\nname = "rmcp"\nversion = "3.8.0"\n')
+    (tmp_path / "Gemfile.lock").write_text("GEM\n  specs:\n    mcp (0.22.1)\n")
+    (tmp_path / "composer.lock").write_text(json.dumps({"packages": [{"name": "mcp/sdk", "version": "v0.7.1"}]}))
+    hits = {v.advisory.ghsa for v in scan(tmp_path, records, source=False).vulnerable}
+    assert hits == {"GHSA-c9f9-cp8h-jcj5", "GHSA-rjr6-rcgv-9m7m"}

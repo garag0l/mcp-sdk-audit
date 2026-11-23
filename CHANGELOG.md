@@ -4,6 +4,9 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+### Added
+- Dependency checks for the official Rust (`rmcp`, `Cargo.lock`), Ruby (`mcp` gem, `Gemfile.lock`) and PHP (`mcp/sdk`, `composer.lock`) SDKs, and for `@modelcontextprotocol/inspector` in npm lockfiles. About 20 published advisories for these packages were not checked before. The bundled snapshot picks them up on the next advisory refresh; `--online` uses them immediately. Source-code rules still cover TypeScript, Python and Go only.
+
 ## [0.1.2] - 2026-11-21
 
 ### Added

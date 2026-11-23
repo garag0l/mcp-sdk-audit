@@ -7,7 +7,7 @@
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 
-`mcp-sdk-audit` checks projects that use the official Model Context Protocol SDKs (TypeScript, Python, Go). It does two things:
+`mcp-sdk-audit` checks projects that use the official Model Context Protocol SDKs (TypeScript, Python, Go, plus dependency checks for Rust, Ruby, PHP and the MCP Inspector). It does two things:
 
 1. **Dependencies.** It reads your lockfiles, including transitive dependencies, and matches every resolved MCP SDK version against the GitHub Advisory Database.
 2. **Code.** Several 2026 advisories say that upgrading changes nothing unless you also change your code. The tool flags code that still has one of those problems, even when the SDK is already patched.
@@ -82,8 +82,11 @@ Findings show up under **Security → Code scanning**, and the text report is ad
 | npm | `package-lock.json`, `npm-shrinkwrap.json`, `pnpm-lock.yaml`, `yarn.lock` (v1 and Berry), `bun.lock` |
 | PyPI | `uv.lock`, `poetry.lock`, `pdm.lock`, `Pipfile.lock`, `requirements*.txt` (pinned) |
 | Go | `go.mod` |
+| crates.io (`rmcp`) | `Cargo.lock` |
+| RubyGems (`mcp`) | `Gemfile.lock`, `gems.locked` |
+| Packagist (`mcp/sdk`) | `composer.lock` |
 
-Packages: `@modelcontextprotocol/{sdk,client,server,server-legacy,core,node,express,hono,fastify}`, `mcp` (PyPI), `github.com/modelcontextprotocol/go-sdk`.
+Packages: `@modelcontextprotocol/{sdk,client,server,server-legacy,core,node,express,hono,fastify,inspector}`, `mcp` (PyPI), `github.com/modelcontextprotocol/go-sdk`, `rmcp` (crates.io), `mcp` (RubyGems), `mcp/sdk` (Packagist).
 
 ## Source rules
 
