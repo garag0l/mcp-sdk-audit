@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -36,10 +37,17 @@ jobs:
             echo 'Check whether any new advisory needs a source rule (upgrade alone not enough).'
             echo EOF
           } >> "$GITHUB_OUTPUT"
-      - uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
+      - id: cpr
+        uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
         with:
           branch: chore/refresh-advisories
           commit-message: "chore: refresh advisory snapshot"
           title: "chore: refresh advisory snapshot"
           body: ${{ steps.diff.outputs.body }}
           labels: advisories
+      - name: Run CI on the refresh PR
+        # PRs opened with GITHUB_TOKEN don't trigger pull_request workflows; dispatch CI on the branch instead.
+        if: steps.cpr.outputs.pull-request-operation == 'created' || steps.cpr.outputs.pull-request-operation == 'updated'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref chore/refresh-advisories

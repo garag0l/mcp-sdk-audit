@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # The advisory-refresh PR is opened with GITHUB_TOKEN, which does not trigger pull_request runs.
+  # refresh-advisories.yml dispatches this workflow on the PR branch so the PR gets checks.
+  workflow_dispatch:
 
 permissions:
   contents: read
